@@ -8,9 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
+
+// CreateDB - sql to create db
+const CreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;\n"
 
 // Source -
 type Source struct {
@@ -48,9 +52,16 @@ func main() {
 	toml.Unmarshal(doc, &config)
 	fmt.Println(config)
 
+	if config.Source.Database == "" {
+		log.Fatal("database should not be empty")
+	}
+
+	if config.Destination.Database == "" {
+		config.Destination.Database = config.Source.Database
+	}
+
 	file := path.Join("/data", config.Source.Database+".sql")
-	_, err = os.Create(file)
-	if err != nil {
+	if _, err := os.Create(file); err != nil {
 		log.Fatal(err)
 	}
 
@@ -73,12 +84,42 @@ func main() {
 
 	args = append(args, config.Source.Database)
 
-	cmd := exec.Command("mysqldump", args...)
+	runCmd(exec.Command("mysqldump", args...))
 
-	fmt.Println(cmd.String())
+	// need to import the sql into target database
+	if config.Destination.Host != "" &&
+		config.Destination.User != "" {
 
+		sql := fmt.Sprintf(CreateDB, config.Destination.Database)
+
+		var args []string
+		args = append(args, "-h"+config.Destination.Host)
+		args = append(args, "-P"+config.Destination.Port)
+		args = append(args, "-u"+config.Destination.User)
+		args = append(args, "-p"+config.Destination.Password)
+
+		var args2 = make([]string, 4)
+		var args3 = make([]string, 4)
+		copy(args2, args)
+		copy(args3, args)
+
+		args2 = append(args2, "-e "+sql+"")
+		runCmd(exec.Command("mysql", args2...))
+
+		args3 = append(args3, config.Destination.Database)
+		args3 = append(args3, "<")
+		args3 = append(args3, file)
+
+		cmd := "mysql " + strings.Join(args3, " ")
+		runCmd(exec.Command("/bin/sh", "-c", cmd))
+	}
+}
+
+func runCmd(cmd *exec.Cmd) {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
+
+	fmt.Println(cmd.String())
 	if err := cmd.Run(); err != nil {
 		fmt.Println(stderr.String())
 		log.Fatal(err)

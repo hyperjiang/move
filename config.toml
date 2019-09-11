@@ -2,8 +2,8 @@
 host = "172.17.0.1"
 port = "3306"
 user = "root"
-password = "hello123"
-database = "ldev-hk" # can not be empty
+password = ""
+database = "a" # can not be empty
 no-data = true # set this to false if you want to dump data, the default behaviour is only dumping schema
 ignore-table = [
 	"migrations",
@@ -11,8 +11,8 @@ ignore-table = [
 ]
 
 [destination]
-host = "172.17.0.1"
+host = "172.17.0.1" # no import if host is empty
 port = "3307"
-user = "root"
+user = "root" # no import if user is empty
 password = ""
-database = "db" # can not be empty
+database = "b" # if it's empty, we will use the same db name as source

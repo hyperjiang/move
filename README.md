@@ -33,4 +33,4 @@ docker run --rm -v $PWD/config.toml:/app/config.toml -v $PWD/data:/data quay.io/
 
 ## notes
 
-- The program does not support dumping all the databases, this is intended, because dumping all the databases is easily to cause problem.
+- The program does not support dumping all the databases, this is intended, because dumping once for all the databases is easy to cause problem.
