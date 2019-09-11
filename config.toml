@@ -1,0 +1,18 @@
+[source]
+host = "172.17.0.1"
+port = "3306"
+user = "root"
+password = "hello123"
+database = "ldev-hk" # can not be empty
+no-data = true # set this to false if you want to dump data, the default behaviour is only dumping schema
+ignore-table = [
+	"migrations",
+	"schema_migrations"
+]
+
+[destination]
+host = "172.17.0.1"
+port = "3307"
+user = "root"
+password = ""
+database = "db" # can not be empty
