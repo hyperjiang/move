@@ -16,19 +16,14 @@ import (
 // CreateDB - sql to create db
 const CreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;\n"
 
-// Source -
-type Source struct {
-	Host         string
-	Port         string
-	User         string
-	Password     string
-	Database     string
+// Option represents options
+type Option struct {
 	NoData       bool     `toml:"no-data"`
 	IgnoreTables []string `toml:"ignore-table"`
 }
 
-// Destination -
-type Destination struct {
+// DSN represents data source name
+type DSN struct {
 	Host     string
 	Port     string
 	User     string
@@ -36,10 +31,11 @@ type Destination struct {
 	Database string
 }
 
-// Config -
+// Config represents the config in toml
 type Config struct {
-	Source      Source
-	Destination Destination
+	Source      DSN
+	Destination DSN
+	Option      Option
 }
 
 func main() {
@@ -56,63 +52,67 @@ func main() {
 		log.Fatal("database should not be empty")
 	}
 
-	if config.Destination.Database == "" {
-		config.Destination.Database = config.Source.Database
-	}
-
 	file := path.Join("/data", config.Source.Database+".sql")
 	if _, err := os.Create(file); err != nil {
 		log.Fatal(err)
 	}
 
-	var args []string
-	args = append(args, "-h"+config.Source.Host)
-	args = append(args, "-P"+config.Source.Port)
-	args = append(args, "-u"+config.Source.User)
-	args = append(args, "-p"+config.Source.Password)
+	var args = config.Source.buildArgs()
 	args = append(args, "-r"+file)
 
-	if config.Source.NoData {
+	if config.Option.NoData {
 		args = append(args, "-d")
 	}
 
-	if config.Source.IgnoreTables != nil {
-		for _, t := range config.Source.IgnoreTables {
+	if config.Option.IgnoreTables != nil {
+		for _, t := range config.Option.IgnoreTables {
 			args = append(args, "--ignore-table="+config.Source.Database+"."+t)
 		}
 	}
 
 	args = append(args, config.Source.Database)
 
-	runCmd(exec.Command("mysqldump", args...))
+	runCmd(buildCmd("mysqldump", args))
 
 	// need to import the sql into target database
 	if config.Destination.Host != "" &&
 		config.Destination.User != "" {
 
-		sql := fmt.Sprintf(CreateDB, config.Destination.Database)
+		if config.Destination.Database == "" {
+			config.Destination.Database = config.Source.Database
+		}
 
-		var args []string
-		args = append(args, "-h"+config.Destination.Host)
-		args = append(args, "-P"+config.Destination.Port)
-		args = append(args, "-u"+config.Destination.User)
-		args = append(args, "-p"+config.Destination.Password)
-
+		var args = config.Destination.buildArgs()
 		var args2 = make([]string, 4)
 		var args3 = make([]string, 4)
 		copy(args2, args)
 		copy(args3, args)
 
-		args2 = append(args2, "-e "+sql+"")
-		runCmd(exec.Command("mysql", args2...))
+		// create database if not exists
+		sql := fmt.Sprintf(CreateDB, config.Destination.Database)
+		args2 = append(args2, "-e '"+sql+"'")
+		runCmd(buildCmd("mysql", args2))
 
+		// import sql into database
 		args3 = append(args3, config.Destination.Database)
 		args3 = append(args3, "<")
 		args3 = append(args3, file)
-
-		cmd := "mysql " + strings.Join(args3, " ")
-		runCmd(exec.Command("/bin/sh", "-c", cmd))
+		runCmd(buildCmd("mysql", args3))
 	}
+}
+
+func (dsn DSN) buildArgs() []string {
+	var args []string
+	args = append(args, "-h"+dsn.Host)
+	args = append(args, "-P"+dsn.Port)
+	args = append(args, "-u"+dsn.User)
+	args = append(args, "-p"+dsn.Password)
+	return args
+}
+
+func buildCmd(name string, args []string) *exec.Cmd {
+	cmd := name + " " + strings.Join(args, " ")
+	return exec.Command("/bin/sh", "-c", cmd)
 }
 
 func runCmd(cmd *exec.Cmd) {

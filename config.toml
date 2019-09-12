@@ -4,15 +4,17 @@ port = "3306"
 user = "root"
 password = ""
 database = "a" # can not be empty
-no-data = true # set this to false if you want to dump data, the default behaviour is only dumping schema
-ignore-table = [
-	"migrations",
-	"schema_migrations"
-]
 
 [destination]
 host = "172.17.0.1" # no import if host is empty
 port = "3307"
 user = "root" # no import if user is empty
 password = ""
-database = "b" # if it's empty, we will use the same db name as source
+database = "" # if it's empty, we will use the same db name as source
+
+[option]
+no-data = true # set this to false if you want to dump data, the default behaviour is only dumping schema
+ignore-table = [
+	"migrations",
+	"schema_migrations"
+]

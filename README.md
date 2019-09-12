@@ -5,12 +5,6 @@
 
 Docker image for dumping and loading mysql schema and data, built on alpine.
 
-## pull the docker image
-
-```
-docker pull quay.io/hyper/move
-```
-
 ## usage
 
 Edit `config.toml` and run something like this:
