@@ -13,7 +13,7 @@ password = ""
 database = "" # if it's empty, we will use the same db name as source
 
 [option]
-no-data = true # set this to false if you want to dump data, the default behaviour is only dumping schema
+no-data = true # set this to false if you want to dump data
 ignore-table = [
 	"migrations",
 	"schema_migrations"

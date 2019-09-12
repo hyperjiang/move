@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,7 @@ import (
 )
 
 // CreateDB - sql to create db
-const CreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;\n"
+const CreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;"
 
 // Option represents options
 type Option struct {
@@ -39,7 +40,11 @@ type Config struct {
 }
 
 func main() {
-	doc, err := ioutil.ReadFile("/app/config.toml")
+	var configFile string
+	flag.StringVar(&configFile, "c", "/app/config.toml", "Config file path")
+	flag.Parse()
+
+	doc, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Fatal("Fail to load config")
 	}
