@@ -1,20 +1,33 @@
-[source]
-host = "172.17.0.1"
-port = "3306"
-user = "root"
-password = ""
-database = "a" # can not be empty
+[[rule]]
+	name = "r1" # can not be empty, should be unique, we use it as sql file name
 
-[destination]
-host = "172.17.0.1" # no import if host is empty
-port = "3307"
-user = "root" # no import if user is empty
-password = ""
-database = "" # if it's empty, we will use the same db name as source
+	[rule.source]
+		host = "172.17.0.1" # can not be empty
+		port = "3306"
+		user = "root" # can not be empty
+		password = ""
+		database = "a" # can not be empty
 
-[option]
-no-data = true # set this to false if you want to dump data
-ignore-table = [
-	"migrations",
-	"schema_migrations"
-]
+	[rule.destination]
+		host = "172.17.0.1" # no import if host is empty
+		port = "3307"
+		user = "root" # no import if user is empty
+		password = ""
+		database = "" # if it's empty, we will use the same db name as source
+
+	[rule.option]
+		no-data = true # set this to false if you want to dump data
+		ignore-table = [
+			"migrations",
+			"schema_migrations"
+		]
+
+[[rule]]
+	name = "r2" # can not be empty, should be unique, we use it as sql file name
+
+	[rule.source]
+		host = "172.17.0.1" # can not be empty
+		port = "3306"
+		user = "root" # can not be empty
+		password = ""
+		database = "b" # can not be empty

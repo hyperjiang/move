@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -14,8 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// CreateDB - sql to create db
-const CreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;"
+const sqlCreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4;"
 
 // Option represents options
 type Option struct {
@@ -32,11 +30,17 @@ type DSN struct {
 	Database string
 }
 
-// Config represents the config in toml
-type Config struct {
+// Rule represents a rule
+type Rule struct {
+	Name        string
 	Source      DSN
 	Destination DSN
 	Option      Option
+}
+
+// Config represents the config in toml
+type Config struct {
+	Rules []Rule `toml:"rule"`
 }
 
 func main() {
@@ -44,62 +48,84 @@ func main() {
 	flag.StringVar(&configFile, "c", "/app/config.toml", "Config file path")
 	flag.Parse()
 
-	doc, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		log.Fatal("Fail to load config")
-	}
-
 	config := Config{}
-	toml.Unmarshal(doc, &config)
-	fmt.Println(config)
-
-	if config.Source.Database == "" {
-		log.Fatal("database should not be empty")
+	if _, err := toml.DecodeFile(configFile, &config); err != nil {
+		log.Fatal(err)
 	}
 
-	file := path.Join("/data", config.Source.Database+".sql")
+	// check if all the rules are valid before real run
+	for _, rule := range config.Rules {
+		rule.check()
+	}
+
+	// run rules
+	for _, rule := range config.Rules {
+		rule.handle()
+	}
+}
+
+func (rule Rule) check() {
+	if rule.Name == "" {
+		log.Fatal("rule name should not be empty")
+	}
+
+	if rule.Source.Host == "" {
+		log.Fatal("source host should not be empty in rule " + rule.Name)
+	}
+
+	if rule.Source.User == "" {
+		log.Fatal("source user should not be empty in rule " + rule.Name)
+	}
+
+	if rule.Source.Database == "" {
+		log.Fatal("source database should not be empty in rule " + rule.Name)
+	}
+}
+
+func (rule Rule) handle() {
+	file := path.Join("/data", rule.Name+".sql")
 	if _, err := os.Create(file); err != nil {
 		log.Fatal(err)
 	}
 
-	var args = config.Source.buildArgs()
+	var args = rule.Source.buildArgs()
 	args = append(args, "-r"+file)
 
-	if config.Option.NoData {
+	if rule.Option.NoData {
 		args = append(args, "-d")
 	}
 
-	if config.Option.IgnoreTables != nil {
-		for _, t := range config.Option.IgnoreTables {
-			args = append(args, "--ignore-table="+config.Source.Database+"."+t)
+	if rule.Option.IgnoreTables != nil {
+		for _, t := range rule.Option.IgnoreTables {
+			args = append(args, "--ignore-table="+rule.Source.Database+"."+t)
 		}
 	}
 
-	args = append(args, config.Source.Database)
+	args = append(args, rule.Source.Database)
 
 	runCmd(buildCmd("mysqldump", args))
 
 	// need to import the sql into target database
-	if config.Destination.Host != "" &&
-		config.Destination.User != "" {
+	if rule.Destination.Host != "" &&
+		rule.Destination.User != "" {
 
-		if config.Destination.Database == "" {
-			config.Destination.Database = config.Source.Database
+		if rule.Destination.Database == "" {
+			rule.Destination.Database = rule.Source.Database
 		}
 
-		var args = config.Destination.buildArgs()
+		var args = rule.Destination.buildArgs()
 		var args2 = make([]string, 4)
 		var args3 = make([]string, 4)
 		copy(args2, args)
 		copy(args3, args)
 
 		// create database if not exists
-		sql := fmt.Sprintf(CreateDB, config.Destination.Database)
+		sql := fmt.Sprintf(sqlCreateDB, rule.Destination.Database)
 		args2 = append(args2, "-e '"+sql+"'")
 		runCmd(buildCmd("mysql", args2))
 
 		// import sql into database
-		args3 = append(args3, config.Destination.Database)
+		args3 = append(args3, rule.Destination.Database)
 		args3 = append(args3, "<")
 		args3 = append(args3, file)
 		runCmd(buildCmd("mysql", args3))
