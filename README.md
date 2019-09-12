@@ -1,9 +1,12 @@
 # move
 
 [![Docker Repository on Quay](https://quay.io/repository/hyper/move/status "Docker Repository on Quay")](https://quay.io/repository/hyper/move)
+[![Go Report](https://goreportcard.com/badge/github.com/hyperjiang/move)](https://goreportcard.com/report/github.com/hyperjiang/move)
 [![License](https://img.shields.io/github/license/hyperjiang/move.svg)](https://github.com/hyperjiang/move)
 
 Docker image for dumping and loading mysql schema and data, built on alpine.
+
+The original intention of this tool is to solve this issue: need to export the entire database structure, and only include certain tables' data.
 
 ## usage
 
@@ -27,5 +30,6 @@ docker run --rm -v $PWD/config.toml:/app/config.toml -v $PWD/data:/data quay.io/
 
 ## notes
 
-- The program does not support dumping all the databases in one time, this is intended, because dumping once for all the databases is easy to cause problem.
-- You can run the program directly without docker if you have mysql client installed on your local.
+- The program does not support dumping all the databases in one time, this is intended, you need to specify the database in each rule.
+- You can run the program directly without docker if you are using linux or mac and have mysql client installed on your local.
+- The rules are run in FIFO order.

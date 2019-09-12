@@ -18,7 +18,9 @@ const sqlCreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET ut
 // Option represents options
 type Option struct {
 	NoData       bool     `toml:"no-data"`
-	IgnoreTables []string `toml:"ignore-table"`
+	NoCreateInfo bool     `toml:"no-create-info"`
+	IgnoreTables []string `toml:"ignore-tables"`
+	Tables       []string `toml:"tables"`
 }
 
 // DSN represents data source name
@@ -91,8 +93,14 @@ func (rule Rule) handle() {
 	var args = rule.Source.buildArgs()
 	args = append(args, "-r"+file)
 
+	// do not dump table contents, equals --no-data
 	if rule.Option.NoData {
 		args = append(args, "-d")
+	}
+
+	// do not write CREATE TABLE statements which re-create each dumped table, equals --no-create-info
+	if rule.Option.NoCreateInfo {
+		args = append(args, "-t")
 	}
 
 	if rule.Option.IgnoreTables != nil {
@@ -102,6 +110,12 @@ func (rule Rule) handle() {
 	}
 
 	args = append(args, rule.Source.Database)
+
+	if rule.Option.Tables != nil {
+		for _, t := range rule.Option.Tables {
+			args = append(args, t)
+		}
+	}
 
 	runCmd(buildCmd("mysqldump", args))
 

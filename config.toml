@@ -6,7 +6,7 @@
 		port = "3306"
 		user = "root" # can not be empty
 		password = ""
-		database = "a" # can not be empty
+		database = "mydb" # can not be empty
 
 	[rule.destination]
 		host = "172.17.0.1" # no import if host is empty
@@ -17,7 +17,7 @@
 
 	[rule.option]
 		no-data = true # set this to false if you want to dump data
-		ignore-table = [
+		ignore-tables = [ # these tables will be ignored
 			"migrations",
 			"schema_migrations"
 		]
@@ -30,4 +30,19 @@
 		port = "3306"
 		user = "root" # can not be empty
 		password = ""
-		database = "b" # can not be empty
+		database = "mydb" # can not be empty
+
+	[rule.destination]
+		host = "172.17.0.1" # no import if host is empty
+		port = "3307"
+		user = "root" # no import if user is empty
+		password = ""
+		database = "" # if it's empty, we will use the same db name as source
+
+	[rule.option]
+		no-data = false # set this to false if you want to dump data
+		no-create-info = true # set this to true if you do not want to write CREATE TABLE statements which re-create each dumped table
+		tables = [ # only these tables will be dumped
+			"tb1",
+			"tb2"
+		]
