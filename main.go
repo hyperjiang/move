@@ -39,6 +39,7 @@ type Rule struct {
 	Source      DSN
 	Destination DSN
 	Option      Option
+	After       []string `toml:"after"`
 }
 
 // Config represents the config in toml
@@ -154,6 +155,12 @@ func (rule Rule) handle() {
 		args3 = append(args3, "<")
 		args3 = append(args3, file)
 		runCmd(buildCmd("mysql", args3))
+
+		if rule.After != nil {
+			for _, sql := range rule.After {
+				runCmd(buildCmd("mysql", append(args, "-e '"+strings.Replace(sql, "'", "\"", -1)+"'")))
+			}
+		}
 	}
 }
 
@@ -176,8 +183,10 @@ func runCmd(cmd *exec.Cmd) {
 	cmd.Stderr = &stderr
 
 	fmt.Println(cmd.String())
-	if err := cmd.Run(); err != nil {
+	if out, err := cmd.Output(); err != nil {
 		fmt.Println(stderr.String())
 		log.Fatal(err)
+	} else {
+		fmt.Println(string(out))
 	}
 }

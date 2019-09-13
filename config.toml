@@ -1,5 +1,8 @@
 [[rule]]
 	name = "r1" # can not be empty, should be unique, we use it as sql file name
+	after = [ # the sql to be executed on destination server after the rule is run
+		"select \"greetings\";"
+	]
 
 	[rule.source]
 		host = "172.17.0.1" # can not be empty
