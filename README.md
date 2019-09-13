@@ -10,7 +10,7 @@ The original intention of this tool is to solve this issue: need to export the e
 
 ## usage
 
-Edit `config.toml` and run something like this:
+You can take a look at `config.toml` to understand the features this tool supports, and create your own config and run command like this:
 
 ```
 docker run --rm -v $PWD/config.toml:/app/config.toml quay.io/hyper/move
