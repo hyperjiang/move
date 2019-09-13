@@ -17,10 +17,11 @@ const sqlCreateDB = "CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET ut
 
 // Option represents options
 type Option struct {
-	NoData       bool     `toml:"no-data"`
-	NoCreateInfo bool     `toml:"no-create-info"`
-	IgnoreTables []string `toml:"ignore-tables"`
-	Tables       []string `toml:"tables"`
+	NoData         bool     `toml:"no-data"`
+	NoCreateInfo   bool     `toml:"no-create-info"`
+	SkipLockTables bool     `toml:"skip-lock-tables"`
+	IgnoreTables   []string `toml:"ignore-tables"`
+	Tables         []string `toml:"tables"`
 }
 
 // DSN represents data source name
@@ -101,6 +102,11 @@ func (rule Rule) handle() {
 	// do not write CREATE TABLE statements which re-create each dumped table, equals --no-create-info
 	if rule.Option.NoCreateInfo {
 		args = append(args, "-t")
+	}
+
+	// do not lock tables
+	if rule.Option.SkipLockTables {
+		args = append(args, "--skip-lock-tables")
 	}
 
 	if rule.Option.IgnoreTables != nil {

@@ -17,6 +17,7 @@
 
 	[rule.option]
 		no-data = true # set this to false if you want to dump data
+		skip-lock-tables = true # set this to false if you don't want to lock the tables on source server
 		ignore-tables = [ # these tables will be ignored
 			"migrations",
 			"schema_migrations"
