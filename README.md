@@ -28,6 +28,12 @@ The sql files dumped from database is stored in `/data`, if you want to get them
 docker run --rm -v $PWD/config.toml:/app/config.toml -v $PWD/data:/data quay.io/hyper/move
 ```
 
+If you only want to run one of the rules defined in your `config.toml`, and its name is `r1`, then you can run it by this:
+
+```
+docker run --rm -v $PWD/config.toml:/app/config.toml quay.io/hyper/move -r r1
+```
+
 ## notes
 
 - The program does not support dumping all the databases in one time, this is intended, you need to specify the database in each rule.
