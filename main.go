@@ -48,7 +48,9 @@ type Config struct {
 
 func main() {
 	var configFile string
+	var ruleName string
 	flag.StringVar(&configFile, "c", "/app/config.toml", "Config file path")
+	flag.StringVar(&ruleName, "r", "", "Specify which rule to run, if not specify then all the rules in config.toml will be run")
 	flag.Parse()
 
 	config := Config{}
@@ -63,6 +65,9 @@ func main() {
 
 	// run rules
 	for _, rule := range config.Rules {
+		if ruleName != "" && ruleName != rule.Name {
+			continue
+		}
 		rule.handle()
 	}
 }
